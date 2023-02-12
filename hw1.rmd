@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+
+**Principles of Data Visualization and Introduction to ggplot2**
+
+I have provided you with data about the 5,000 fastest growing companies in the US, as compiled by Inc. magazine. lets read this in:
+
+```{r}
+
+inc <- read.csv("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA_608/master/module1/Data/inc5000_data.csv", header= TRUE)
+
+```
+
+And lets preview this data:
+
+```{r}
+
+head(inc)
+
+```
+```{r}
+
+summary(inc)
+
+```
+
+Think a bit on what these summaries mean. Use the space below to add some more relevant non-visual exploratory information you think helps you understand this data:
+
+```{r, warning=F, message=F}
+library(tidyverse)  # I would like to use dplyr's glimpse function, as well as other things from tidyverse.
+glimpse(inc)
+```
+I see that we have more detailed knowledge of the types of numerical columns. For example, `Rank` and `Employees` are of the type integer. `Growth_Rate` and `Revenue` are of the type double. 
+
+I want to see the proportion of missing values in each column.
+```{r}
+
+(colSums(is.na(inc)) / nrow(inc)) * 100
+```
+Only the `Employees` column contains missing values, ~24%.
+
+## Question 1
+
+Create a graph that shows the distribution of companies in the dataset by State (ie how many are in each state). There are a lot of States, so consider which axis you should use. This visualization is ultimately going to be consumed on a 'portrait' oriented screen (ie taller than wide), which should further guide your layout choices.
+
+```{r}
+
+# Answer Question 1 here
+# I am using ggplot2 from tidyverse to make a bar chart.
+df <- inc %>% group_by(State) %>%   mutate(count_name_occurr = n())
+ggplot(data=df, aes(x=reorder(State,count_name_occurr))) +
+  geom_bar(stat="count") + 
+  xlab('State') +
+  coord_flip()
+```
+
+## Quesiton 2
+
+Lets dig in on the state with the 3rd most companies in the data set. Imagine you work for the state and are interested in how many people are employed by companies in different industries. Create a plot that shows the average and/or median employment by industry for companies in this state (only use cases with full data, use R's `complete.cases()` function.) In addition to this, your graph should show how variable the ranges are, and you should deal with outliers.
+
+```{r}
+
+# Answer Question 2 here
+df1 <- df %>% filter(State == 'NY')
+df1 <- df1[complete.cases(df1),]
+
+```
+
+```{r}
+ggplot(df1, aes(Industry, Employees)) +
+    stat_summary(
+    mapping = aes(x = Industry, y = Employees),
+    fun.min = min,
+    fun.max = max,
+    fun = median
+  ) +
+  coord_flip()
+
+```
+
+
+## Question 3
+
+Now imagine you work for an investor and want to see which industries generate the most revenue per employee. Create a chart that makes this information clear. Once again, the distribution per industry should be shown.
+
+```{r}
+
+# Answer Question 3 here
+ggplot(df1, aes(Industry, Revenue/Employees)) + 
+  geom_bar(stat = "summary_bin", fun = mean) +
+  ylab('Revenue Per Employee') +
+  coord_flip()
+```
+
+
